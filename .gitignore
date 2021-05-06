@@ -3,3 +3,5 @@
 
 # we don't want user data in our repo
 config.json
+# we don't want token in our repo either
+token

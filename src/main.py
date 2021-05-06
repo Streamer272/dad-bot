@@ -53,5 +53,8 @@ class CustomClient(discord.Client):
 
 if __name__ == '__main__':
     client = CustomClient()
-    # noinspection SpellCheckingInspection
-    client.run("ODM5NTYyNzg1MTIwOTc2OTU2.YJLdxg.dKqBhZA-WVl5837gUDhGrwfjO4k")
+
+    with open("token", "r") as file:
+        token = file.read()
+
+    client.run(token.replace("/n", "").replace("/r", ""))
