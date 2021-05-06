@@ -1,2 +1,5 @@
 /venv
 /.idea
+
+# we don't want user data in our repo
+config.json
