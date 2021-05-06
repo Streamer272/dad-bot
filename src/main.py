@@ -3,21 +3,29 @@ from src.ConfigController import ConfigController
 
 
 class CustomClient(discord.Client):
-    # self.im_variations = ["im", "i'm", "ja som", "som", "i am"]
-
     async def on_ready(self):
-        print(f'{self.user} has connected to Discord!')
+        print(f"{self.user} has connected to Discord!")
 
     async def on_message(self, message):
         await self.wait_until_ready()
 
+        try:
+            ConfigController.get_config(message.guild.name)
+        except KeyError:
+            ConfigController.init_config(message.guild.name)
+
         if message.author == self.user:
             return None
 
-        for i in ConfigController.get_config("im_variations"):
+        if ConfigController.get_config(message.guild.name).get("disabled"):
+            return None
+
+        for i in ConfigController.get_config(message.guild.name).get("im_variations"):
             if message.content.startswith(i + " ", 0):
                 await message.channel.send(
-                    ConfigController.get_config("message").replace("<name>", message.content.replace(i + " ", ""))
+                    ConfigController.get_config(message.guild.name).get("message").replace("<name>",
+                                                                                           message.content.replace(
+                                                                                               i + " ", ""))
                 )
 
 
