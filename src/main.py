@@ -1,6 +1,5 @@
 import discord
 from json import loads
-from src.ConfigController import ConfigController
 from src.database_controller import DatabaseController
 from src.logger import Logger
 
@@ -35,27 +34,33 @@ class CustomClient(discord.Client):
                         message.content.replace(message.content[0:len(i)] + " ", ""))
                 )
 
+    # TODO: rewrite this function
     async def perform_command(self, message):
-        if message.content.startswith(self.command_symbol + "disable"):
-            config = ConfigController.get_config(message.guild.name)
-            config["disabled"] = True
-            ConfigController.set_config(message.guild.name, config)
+        # if message.content.startswith(self.command_symbol + "disable"):
+        #     config = ConfigController.get_config(message.guild.name)
+        #     config["disabled"] = True
+        #     ConfigController.set_config(message.guild.name, config)
+        #
+        # elif message.content.startswith(self.command_symbol + "enable"):
+        #     config = ConfigController.get_config(message.guild.name)
+        #     config["disabled"] = False
+        #     ConfigController.set_config(message.guild.name, config)
+        #
+        # elif message.content.startswith(self.command_symbol + "set-message "):
+        #     config = ConfigController.get_config(message.guild.name)
+        #     config["message"] = message.content.replace(self.command_symbol + "set-message ", "")
+        #     ConfigController.set_config(message.guild.name, config)
+        pass
 
-        elif message.content.startswith(self.command_symbol + "enable"):
-            config = ConfigController.get_config(message.guild.name)
-            config["disabled"] = False
-            ConfigController.set_config(message.guild.name, config)
-
-        elif message.content.startswith(self.command_symbol + "set-message "):
-            config = ConfigController.get_config(message.guild.name)
-            config["message"] = message.content.replace(self.command_symbol + "set-message ", "")
-            ConfigController.set_config(message.guild.name, config)
+    async def on_error(self, event, *args, **kwargs):
+        error_message = f"Error occurred while handling {event} with {args}, {kwargs}"
+        Logger.log(error_message)
 
 
 if __name__ == '__main__':
     client = CustomClient()
 
-    with open("token", "r") as file:
+    with open("../token", "r") as file:
         token = file.read()
 
     token = token.replace("\n", "")
