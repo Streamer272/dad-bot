@@ -1,4 +1,4 @@
-from json import dumps, loads
+from json import dumps
 from ss3dbc import Database
 
 

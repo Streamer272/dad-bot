@@ -1,4 +1,5 @@
 import discord
+from json import loads
 from src.ConfigController import ConfigController
 from src.database_controller import DatabaseController
 from src.logger import Logger
@@ -17,23 +18,21 @@ class CustomClient(discord.Client):
             return None
 
         try:
-            ConfigController.get_config(message.guild.name)
-        except KeyError:
-            ConfigController.init_config(message.guild.name)
+            if DatabaseController.get_status(message.guild.name):
+                return None
 
-        if message.content.startswith(self.command_symbol, 0, 2):
+        except TypeError:
+            DatabaseController.create_record(message.guild.name, [])
+
+        if message.content.startswith(DatabaseController.get_value(message.guild.name, "command_prefix"), 0, 2):
             await self.perform_command(message)
             return None
 
-        if ConfigController.get_config(message.guild.name).get("disabled"):
-            return None
-
-        for i in ConfigController.get_config(message.guild.name).get("im_variations"):
-            if message.content.startswith(i + " ", 0):
+        for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
+            if message.content.lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
-                    ConfigController.get_config(message.guild.name).get("message").replace("<name>",
-                                                                                           message.content.replace(
-                                                                                               i + " ", ""))
+                    DatabaseController.get_value(message.guild.name, "message").replace("<name>",
+                        message.content.replace(message.content[0:len(i)] + " ", ""))
                 )
 
     async def perform_command(self, message):
