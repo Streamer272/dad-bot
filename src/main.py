@@ -1,12 +1,14 @@
 import discord
 from src.ConfigController import ConfigController
+from src.database_controller import DatabaseController
+from src.logger import Logger
 
 
 class CustomClient(discord.Client):
     command_symbol = "$"
 
     async def on_ready(self):
-        print(f"{self.user} has connected to Discord!")
+        print(f"{self.user} is now running!")
 
     async def on_message(self, message):
         await self.wait_until_ready()
@@ -57,4 +59,7 @@ if __name__ == '__main__':
     with open("token", "r") as file:
         token = file.read()
 
-    client.run(token.replace("/n", "").replace("/r", ""))
+    token = token.replace("\n", "")
+    token = token.replace("\r", "")
+
+    client.run(token)
