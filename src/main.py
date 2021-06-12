@@ -5,7 +5,8 @@ from src.logger import Logger
 
 
 class CustomClient(discord.Client):
-    command_symbol = "$"
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     async def on_ready(self):
         print(f"{self.user} is now running!")
@@ -37,6 +38,8 @@ class CustomClient(discord.Client):
                         str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
                 )
 
+    # TODO idea: maybe rework this using discord.ext.commands ??
+    # example: https://github.com/Rapptz/discord.py/blob/v1.7.2/examples/basic_bot.py
     # noinspection PyMethodMayBeStatic
     async def perform_command(self, message):
         # we don't want command prefix here

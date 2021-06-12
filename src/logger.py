@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 
+# TODO idea: maybe try module logging for this?
 class Logger:
     @staticmethod
     def log(message, console=True):
