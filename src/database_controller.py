@@ -16,7 +16,7 @@ class DatabaseController:
     def set_value(server_name, key, value):
         db = Database("../db/database.sql")
 
-        db.get_table("Server").update_record(f"server_name='{server_name}'", f"{key}={value}")
+        db.get_table("Server").update_record(f"server_name='{server_name}'", f"{key}='{value}'")
 
         db.close()
 

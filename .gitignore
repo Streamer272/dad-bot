@@ -8,3 +8,4 @@ token
 
 /ss3dbc
 /db/*.sql
+/log/*.txt
