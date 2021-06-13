@@ -1,7 +1,7 @@
 import discord
 from json import loads, dumps
-from database_controller import DatabaseController
-from logger import Logger
+from src.database_controller import DatabaseController
+from src.logger import Logger
 
 
 class CustomClient(discord.Client):
@@ -87,7 +87,7 @@ with args: {args}
 and kwargs: {kwargs}""")
 
 
-if __name__ == '__main__':
+def run():
     client = CustomClient()
 
     with open("../token", "r") as file:
@@ -97,3 +97,7 @@ if __name__ == '__main__':
     token = token.replace("\r", "")
 
     client.run(token)
+
+
+if __name__ == '__main__':
+    run()
