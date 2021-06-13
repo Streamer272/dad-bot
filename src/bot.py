@@ -80,10 +80,10 @@ Available commands:
         # TODO: finish this function
         # TODO idea: maybe add variable getting (so they can know their im_variations and stuff)
 
-    # async def on_error(self, event, *args, **kwargs):
-    #     Logger.log(f"""Error occurred while handling event: {event}
-# with args: {args}
-# and kwargs: {kwargs}""")
+    async def on_error(self, event, *args, **kwargs):
+        Logger.log(f"""Error occurred while handling event: {event}
+with args: {args}
+and kwargs: {kwargs}""")
 
 
 def run():
