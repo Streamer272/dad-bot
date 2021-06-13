@@ -12,35 +12,31 @@ class CustomClient(discord.Client):
         print(f"{self.user} is now running!")
 
     async def on_message(self, message):
-        try:
-            await self.wait_until_ready()
+        await self.wait_until_ready()
 
-            if message.author == self.user:
+        if message.author == self.user:
+            return None
+
+        try:
+            # command perform
+            if str(message.content).startswith(DatabaseController.get_value(message.guild.name, "command_prefix"), 0, 2):
+                await self.perform_command(message)
                 return None
 
-            try:
-                # command perform
-                if str(message.content).startswith(DatabaseController.get_value(message.guild.name, "command_prefix"), 0, 2):
-                    await self.perform_command(message)
-                    return None
+            # is disabled check
+            if DatabaseController.get_status(message.guild.name):
+                return None
 
-                # is disabled check
-                if DatabaseController.get_status(message.guild.name):
-                    return None
+        except TypeError:
+            DatabaseController.create_record(message.guild.name, [])
 
-            except TypeError:
-                DatabaseController.create_record(message.guild.name, [])
-
-            # sending back message
-            for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
-                if str(message.content).lower().startswith(i.lower() + " ", 0):
-                    await message.channel.send(
-                        DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                            str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
-                    )
-
-        except Exception as e:
-            print(e)
+        # sending back message
+        for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
+            if str(message.content).lower().startswith(i.lower() + " ", 0):
+                await message.channel.send(
+                    DatabaseController.get_value(message.guild.name, "message").replace("<name>",
+                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
+                )
 
     # TODO idea: maybe rework this using discord.ext.commands ??
     # example: https://github.com/Rapptz/discord.py/blob/v1.7.2/examples/basic_bot.py
