@@ -1,7 +1,7 @@
 import discord
 from json import loads, dumps
-from src.database_controller import DatabaseController
-from src.logger import Logger
+from database_controller import DatabaseController
+from logger import Logger
 
 
 class CustomClient(discord.Client):
