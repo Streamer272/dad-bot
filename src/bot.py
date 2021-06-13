@@ -90,7 +90,7 @@ and kwargs: {kwargs}""")
 def run():
     client = CustomClient()
 
-    with open("../token", "r") as file:
+    with open("./token", "r") as file:
         token = file.read()
 
     token = token.replace("\n", "")
