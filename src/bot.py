@@ -12,31 +12,35 @@ class CustomClient(discord.Client):
         print(f"{self.user} is now running!")
 
     async def on_message(self, message):
-        await self.wait_until_ready()
-
-        if message.author == self.user:
-            return None
-
         try:
-            # command perform
-            if str(message.content).startswith(DatabaseController.get_value(message.guild.name, "command_prefix"), 0, 2):
-                await self.perform_command(message)
+            await self.wait_until_ready()
+
+            if message.author == self.user:
                 return None
 
-            # is disabled check
-            if DatabaseController.get_status(message.guild.name):
-                return None
+            try:
+                # command perform
+                if str(message.content).startswith(DatabaseController.get_value(message.guild.name, "command_prefix"), 0, 2):
+                    await self.perform_command(message)
+                    return None
 
-        except TypeError:
-            DatabaseController.create_record(message.guild.name, [])
+                # is disabled check
+                if DatabaseController.get_status(message.guild.name):
+                    return None
 
-        # sending back message
-        for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
-            if str(message.content).lower().startswith(i.lower() + " ", 0):
-                await message.channel.send(
-                    DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
-                )
+            except TypeError:
+                DatabaseController.create_record(message.guild.name, [])
+
+            # sending back message
+            for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
+                if str(message.content).lower().startswith(i.lower() + " ", 0):
+                    await message.channel.send(
+                        DatabaseController.get_value(message.guild.name, "message").replace("<name>",
+                            str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
+                    )
+
+        except Exception as e:
+            print(e)
 
     # TODO idea: maybe rework this using discord.ext.commands ??
     # example: https://github.com/Rapptz/discord.py/blob/v1.7.2/examples/basic_bot.py
@@ -81,8 +85,7 @@ Available commands:
         # TODO idea: maybe add variable getting (so they can know their im_variations and stuff)
 
     async def on_error(self, event, *args, **kwargs):
-        Logger.log(f"""Error occurred while handling
-event: {event}
+        Logger.log(f"""Error occurred while handling event: {event}
 with args: {args}
 and kwargs: {kwargs}""")
 
