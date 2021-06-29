@@ -4,21 +4,22 @@ from typing import List
 
 from src.database_controller import DatabaseController
 from src.logger import Logger
+from src.command import Command, Argument
 
 
 class CustomClient(discord.Client):
-    __available_commands: List[List[str]]
+    __available_commands: List[Command]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.__available_commands = [
-            ["help", "displays help message"],
-            ["set-status [true/false]", "Sets bot status"],
-            ["set-command-prefix \"<prefix>\"", "Sets command prefix"],
-            ["set-message \"<message>\"", "Sets response message"],
-            ["add-im-variation \"<variation>\"", "Adds im variation"],
-            ["remove-im-variation \"<variation>\"", "Removes im variation"]
+            Command("help", "Displays help message", []),
+            Command("set-status", "Sets bot active status", [Argument(0, "[true/false]", "active value")]),
+            Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix")]),
+            Command("set-message", "Sets bot response message", [Argument(0, "\"<message>\"", "response message")]),
+            Command("add-im-variation", "Adds im variation", [Argument(0, "\"<im_variation>\"", "im variation")]),
+            Command("remove-im-variation", "Removes im variation", [Argument(0, "\"<im_variation>\"", "im variation")])
         ]
 
     async def on_ready(self):
@@ -38,7 +39,7 @@ class CustomClient(discord.Client):
                 return None
 
             # is disabled check
-            if not DatabaseController.get_status(message.guild.name):
+            if DatabaseController.get_status(message.guild.name):
                 return None
 
         except TypeError:
@@ -61,7 +62,7 @@ class CustomClient(discord.Client):
         # checking if command exists
         command_recognized = False
         for command in self.__available_commands:
-            if message_content.startswith(command[0].split(" ")[0]):
+            if message_content.startswith(command.name.split(" ")[0]):
                 command_recognized = True
                 break
 
@@ -79,8 +80,8 @@ class CustomClient(discord.Client):
 
             for command in self.__available_commands:
                 embed.add_field(
-                    name=command[0],
-                    value=command[1],
+                    name=command.name,
+                    value=command.description,
                     inline=False
                 )
 
@@ -113,6 +114,8 @@ class CustomClient(discord.Client):
             im_variations.remove(first_argument)
             DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
+        # TODO: add administrator check (only admins can change settings)
+        # TODO: add clear command (clears amount of messages)
         # TODO: add variable getting (so they can know their im_variations and stuff)
         # TODO: add dad-jokes like Joe, Candice etc...
 
