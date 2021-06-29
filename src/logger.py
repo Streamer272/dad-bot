@@ -1,16 +1,13 @@
 from datetime import date, datetime
-from os import mkdir, path
 
 
 class Logger:
     @staticmethod
     def log(message, console=True):
-        if console:
-            print(f"{datetime.now()}: {message}")
+        message_to_write = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {message}\n"
 
-        if not path.exists("log"):
-            mkdir("log")
+        if console:
+            print(f"{message_to_write}")
 
         with open(f"./log/log-{str(date.today())}.txt", "a") as file:
-            # TODO: remove milliseconds from datetime
-            file.write(f"{datetime.now()}: {message}\n")
+            file.write(f"{message_to_write}")

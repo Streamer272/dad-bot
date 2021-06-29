@@ -113,7 +113,8 @@ class CustomClient(discord.Client):
             im_variations.remove(first_argument)
             DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
-        # TODO idea: add variable getting (so they can know their im_variations and stuff)
+        # TODO: add variable getting (so they can know their im_variations and stuff)
+        # TODO: add dad-jokes like Joe, Candice etc...
 
     # noinspection PyMethodMayBeStatic
     def get_argument(self, command: str, index: int):
@@ -142,9 +143,9 @@ class CustomClient(discord.Client):
 
     async def on_error(self, event, *args, **kwargs):
         Logger.log(f"""
-Error occurred while handling event: {event}
-    with args: {args}
-    and kwargs: {kwargs}
+    Error occurred while handling event: {event}
+        with args: {args}
+        and kwargs: {kwargs}
 """)
 
 
