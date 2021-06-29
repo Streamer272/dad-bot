@@ -1,13 +1,25 @@
 import discord
 from json import loads, dumps
+from typing import List
 
 from src.database_controller import DatabaseController
 from src.logger import Logger
 
 
 class CustomClient(discord.Client):
+    __available_commands: List[List[str]]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.__available_commands = [
+                ["help", "displays help message"],
+                ["set-status [true/false]", "Sets bot status"],
+                ["set-command-prefix \"<prefix>\"", "Sets command prefix"],
+                ["set-message \"<message>\"", "Sets response message"],
+                ["add-im-variation \"<variation>\"", "Adds im variation"],
+                ["remove-im-variation \"<variation>\"", "Removes im variation"]
+            ]
 
     async def on_ready(self):
         print(f"Connected to Discord as {self.user}!")
@@ -42,25 +54,32 @@ class CustomClient(discord.Client):
                                                                                             0:len(i)] + " ", ""))
                 )
 
-    # TODO idea: change syntax, fe $set-message "Message..."
     # noinspection PyMethodMayBeStatic
     async def perform_command(self, message):
         # we don't want command prefix here
         message_content = str(message.content)[1:]
+        first_argument = self.get_argument(message_content, 0)
 
+        # checking if command exists
+        command_recognized = False
+        for command in self.__available_commands:
+            if message_content.startswith(command[0].split(" ")[0]):
+                command_recognized = True
+                break
+
+        if not command_recognized:
+            embed = discord.Embed(title="Command not recognized", color=discord.Color.red(),
+                                  description="Dad-Bot couldn't recognize your command, please check "
+                                              "help to get list of all available commands.")
+
+            await message.channel.send(embed=embed)
+            return None
+
+        # executing commands without first argument
         if message_content == "help":
             embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
 
-            commands = [
-                ["help", "displays help message"],
-                ["set-status [true/false]", "Sets bot status"],
-                ["set-command-prefix \"<prefix>\"", "Sets command prefix"],
-                ["set-message \"<message>\"", "Sets response message"],
-                ["add-im-variation \"<variation>\"", "Adds im variation"],
-                ["remove-im-variation \"<variation>\"", "Removes im variation"]
-            ]
-
-            for command in commands:
+            for command in self.__available_commands:
                 embed.add_field(
                     name=command[0],
                     value=command[1],
@@ -72,37 +91,35 @@ class CustomClient(discord.Client):
         elif message_content.startswith("set-status"):
             DatabaseController.set_status(message.guild.name, "f" in message_content.replace("set-status ", ""))
 
+        # executing commands with first argument
+        elif not first_argument:
+            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                  description="Woah! That command requires an argument, check it with help command.")
+
+            await message.channel.send(embed=embed)
+            return None
+
         elif message_content.startswith("set-command-prefix"):
-            DatabaseController.set_value(message.guild.name, "command_prefix",
-                                         (await self.extract_arguments(message_content))[0])
+            DatabaseController.set_value(message.guild.name, "command_prefix", first_argument)
 
         elif message_content.startswith("set-message"):
-            DatabaseController.set_value(message.guild.name, "message",
-                                         (await self.extract_arguments(message_content))[0].replace("'", ""))
+            DatabaseController.set_value(message.guild.name, "message", first_argument.replace("'", ""))
 
         elif message_content.startswith("add-im-variation"):
             im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
-            im_variations.append((await self.extract_arguments(message_content))[0])
+            im_variations.append(first_argument)
             DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
         elif message_content.startswith("remove-im-variation"):
             im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
-            im_variations.remove((await self.extract_arguments(message_content))[0])
+            im_variations.remove(first_argument)
             DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
-        else:
-            embed = discord.Embed(title="Command not recognized", color=discord.Color.blue(),
-                                  description="Dad-Bot couldn't recognize your command, please check "
-                                              "help to get list of all available commands.")
-
-            await message.channel.send(embed=embed)
-
-        # TODO: handle no arguments
-        # TODO: finish this function
-        # TODO idea: maybe add variable getting (so they can know their im_variations and stuff)
+        # TODO idea: add variable getting (so they can know their im_variations and stuff)
 
     # noinspection PyMethodMayBeStatic
-    async def extract_arguments(self, command: str):
+    def get_argument(self, command: str, index: int):
+        # getting arguments
         arguments = []
 
         current_argument = ""
@@ -119,7 +136,11 @@ class CustomClient(discord.Client):
             if record and char != "\"":
                 current_argument += char
 
-        return arguments
+        try:
+            return arguments[index]
+
+        except IndexError:
+            return None
 
     async def on_error(self, event, *args, **kwargs):
         Logger.log(
