@@ -14,17 +14,22 @@ class CustomClient(discord.Client):
         super().__init__(*args, **kwargs)
 
         self.__available_commands = [
-            Command("help", "Displays help message", [], self.help),
+            Command("help", "Displays help message", [Argument(0, "\"<command_name>\"", "active value", False,
+                                                               False)], self.help),
             # TODO: rework this so you don't have to "true" / "false" -> true / false
-            Command("set-status", "Sets bot active status", [Argument(0, "[\"true\"/\"false\"]", "active value")],
-                    self.set_status),
-            Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix")],
+            Command("set-status", "Sets bot active status", [Argument(0, "[\"true\"/\"false\"]", "active value", False,
+                                                                      True)], self.set_status),
+            Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix",
+                                                                               True, True)],
                     self.set_command_prefix),
-            Command("set-message", "Sets bot response message", [Argument(0, "\"<message>\"", "response message")],
+            Command("set-message", "Sets bot response message", [Argument(0, "\"<message>\"", "response message", True,
+                                                                          True)],
                     self.set_message),
-            Command("add-im-variation", "Adds im variation", [Argument(0, "\"<im_variation>\"", "im variation")],
+            Command("add-im-variation", "Adds im variation", [Argument(0, "\"<im_variation>\"", "im variation", True,
+                                                                       True)],
                     self.add_im_variation),
-            Command("remove-im-variation", "Removes im variation", [Argument(0, "\"<im_variation>\"", "im variation")],
+            Command("remove-im-variation", "Removes im variation", [Argument(0, "\"<im_variation>\"", "im variation",
+                                                                             True, True)],
                     self.remove_im_variation)
         ]
 
@@ -61,7 +66,6 @@ class CustomClient(discord.Client):
                                                                                             0:len(i)] + " ", ""))
                 )
 
-    # noinspection PyMethodMayBeStatic
     async def perform_command(self, message):
         # we don't want command prefix here
         message_content = str(message.content)[1:]
