@@ -59,6 +59,13 @@ class CustomClient(discord.Client):
         message_content = str(message.content)[1:]
         first_argument = self.get_argument(message_content, 0)
 
+        if not message.author.guild_permissions.administrator:
+            embed = discord.Embed(title="Not administrator...", color=discord.Color.red(),
+                                  description="Dad-Bot only accepts commands from administrators, sorry.")
+
+            await message.channel.send(embed=embed)
+            return None
+
         # checking if command exists
         command_recognized = False
         for command in self.__available_commands:
@@ -67,7 +74,7 @@ class CustomClient(discord.Client):
                 break
 
         if not command_recognized:
-            embed = discord.Embed(title="Command not recognized", color=discord.Color.red(),
+            embed = discord.Embed(title="Command not recognized...", color=discord.Color.red(),
                                   description="Dad-Bot couldn't recognize your command, please check "
                                               "help to get list of all available commands.")
 
@@ -114,7 +121,6 @@ class CustomClient(discord.Client):
             im_variations.remove(first_argument)
             DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
-        # TODO: add administrator check (only admins can change settings)
         # TODO: add clear command (clears amount of messages)
         # TODO: add variable getting (so they can know their im_variations and stuff)
         # TODO: add dad-jokes like Joe, Candice etc...
