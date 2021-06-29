@@ -14,12 +14,18 @@ class CustomClient(discord.Client):
         super().__init__(*args, **kwargs)
 
         self.__available_commands = [
-            Command("help", "Displays help message", []),
-            Command("set-status", "Sets bot active status", [Argument(0, "[true/false]", "active value")]),
-            Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix")]),
-            Command("set-message", "Sets bot response message", [Argument(0, "\"<message>\"", "response message")]),
-            Command("add-im-variation", "Adds im variation", [Argument(0, "\"<im_variation>\"", "im variation")]),
-            Command("remove-im-variation", "Removes im variation", [Argument(0, "\"<im_variation>\"", "im variation")])
+            Command("help", "Displays help message", [], self.help),
+            # TODO: rework this so you don't have to "true" / "false" -> true / false
+            Command("set-status", "Sets bot active status", [Argument(0, "[\"true\"/\"false\"]", "active value")],
+                    self.set_status),
+            Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix")],
+                    self.set_command_prefix),
+            Command("set-message", "Sets bot response message", [Argument(0, "\"<message>\"", "response message")],
+                    self.set_message),
+            Command("add-im-variation", "Adds im variation", [Argument(0, "\"<im_variation>\"", "im variation")],
+                    self.add_im_variation),
+            Command("remove-im-variation", "Removes im variation", [Argument(0, "\"<im_variation>\"", "im variation")],
+                    self.remove_im_variation)
         ]
 
     async def on_ready(self):
@@ -50,7 +56,9 @@ class CustomClient(discord.Client):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
                     DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
+                                                                                        str(message.content).replace(
+                                                                                            str(message.content)[
+                                                                                            0:len(i)] + " ", ""))
                 )
 
     # noinspection PyMethodMayBeStatic
@@ -67,13 +75,13 @@ class CustomClient(discord.Client):
             return None
 
         # checking if command exists
-        command_recognized = False
+        command_to_execute = None
         for command in self.__available_commands:
             if message_content.startswith(command.name.split(" ")[0]):
-                command_recognized = True
+                command_to_execute = command
                 break
 
-        if not command_recognized:
+        if not command_to_execute:
             embed = discord.Embed(title="Command not recognized...", color=discord.Color.red(),
                                   description="Dad-Bot couldn't recognize your command, please check "
                                               "help to get list of all available commands.")
@@ -81,45 +89,15 @@ class CustomClient(discord.Client):
             await message.channel.send(embed=embed)
             return None
 
-        # executing commands without first argument
-        if message_content == "help":
-            embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
-
-            for command in self.__available_commands:
-                embed.add_field(
-                    name=command.name,
-                    value=command.description,
-                    inline=False
-                )
-
-            await message.channel.send(embed=embed)
-
-        elif message_content.startswith("set-status"):
-            DatabaseController.set_status(message.guild.name, "f" in message_content.replace("set-status ", ""))
-
-        # executing commands with first argument
-        elif not first_argument:
+        if (len(command_to_execute.arguments) != 0) and (not first_argument):
             embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
-                                  description="Woah! That command requires an argument, check it with help command.")
+                                  description=f"Woah! \"{command_to_execute.name}\" requires an argument, check it"
+                                              f"with help command.")
 
             await message.channel.send(embed=embed)
             return None
 
-        elif message_content.startswith("set-command-prefix"):
-            DatabaseController.set_value(message.guild.name, "command_prefix", first_argument)
-
-        elif message_content.startswith("set-message"):
-            DatabaseController.set_value(message.guild.name, "message", first_argument.replace("'", ""))
-
-        elif message_content.startswith("add-im-variation"):
-            im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
-            im_variations.append(first_argument)
-            DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
-
-        elif message_content.startswith("remove-im-variation"):
-            im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
-            im_variations.remove(first_argument)
-            DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
+        await command_to_execute.callback(message)
 
         # TODO: add clear command (clears amount of messages)
         # TODO: add variable getting (so they can know their im_variations and stuff)
@@ -156,6 +134,40 @@ class CustomClient(discord.Client):
         with args: {args}
         and kwargs: {kwargs}
 """)
+
+    # commands
+    async def help(self, message):
+        embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
+
+        for command in self.__available_commands:
+            embed.add_field(
+                name=command.name,
+                value=command.description,
+                inline=False
+            )
+
+        await message.channel.send(embed=embed)
+
+    async def set_status(self, message):
+        DatabaseController.set_status(message.guild.name, "f" in self.get_argument(str(message.content)[1:], 0))
+
+    async def set_command_prefix(self, message):
+        DatabaseController.set_value(message.guild.name, "command_prefix", self.get_argument(str(message.content)[1:],
+                                                                                             0))
+
+    async def set_message(self, message):
+        DatabaseController.set_value(message.guild.name, "message", self.get_argument(str(message.content)[1:],
+                                                                                      0).replace("'", ""))
+
+    async def add_im_variation(self, message):
+        im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
+        im_variations.append(self.get_argument(str(message.content)[1:], 0))
+        DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
+
+    async def remove_im_variation(self, message):
+        im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
+        im_variations.remove(self.get_argument(str(message.content)[1:], 0))
+        DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
 
 def run():
