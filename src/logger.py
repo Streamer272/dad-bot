@@ -9,5 +9,6 @@ class Logger:
         if console:
             print(f"{message_to_write}")
 
-        with open(f"./log/log-{str(date.today())}.txt", "a") as file:
-            file.write(f"{message_to_write}")
+        file = open(f"./log/log-{str(date.today())}.txt", "a")
+        file.write(f"{message_to_write}")
+        file.close()

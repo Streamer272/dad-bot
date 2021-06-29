@@ -4,11 +4,11 @@ from ss3dbc import Database
 
 class DatabaseController:
     @staticmethod
-    def create_record(server_name, im_variations, message="Hi <name>, Im Dad!", disabled=False, command_prefix="$"):
+    def create_record(server_name, im_variations, message="Hi <name>, Im Dad!", enabled=True, command_prefix="$"):
         db = Database("./db/database.sql")
 
         db.get_table("Server").add_record(
-            f"'{server_name}', '{command_prefix}', '{dumps(im_variations)}', '{message}', {disabled}")
+            f"'{server_name}', '{command_prefix}', '{dumps(im_variations)}', '{message}', {enabled}")
 
         db.close()
 
@@ -21,10 +21,10 @@ class DatabaseController:
         db.close()
 
     @staticmethod
-    def set_status(server_name, disabled):
+    def set_status(server_name, enabled):
         db = Database("./db/database.sql")
 
-        db.get_table("Server").update_record(f"server_name='{server_name}'", f"disabled={disabled}")
+        db.get_table("Server").update_record(f"server_name='{server_name}'", f"enabled={enabled}")
 
         db.close()
 
@@ -40,4 +40,4 @@ class DatabaseController:
         db = Database("./db/database.sql")
 
         return bool(db.get_table("Server").controller.query(
-            f"SELECT disabled FROM Server WHERE server_name='{server_name}'").fetchone()[0])
+            f"SELECT enabled FROM Server WHERE server_name='{server_name}'").fetchone()[0])

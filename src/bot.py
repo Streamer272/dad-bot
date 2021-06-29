@@ -38,7 +38,7 @@ class CustomClient(discord.Client):
                 return None
 
             # is disabled check
-            if DatabaseController.get_status(message.guild.name):
+            if not DatabaseController.get_status(message.guild.name):
                 return None
 
         except TypeError:
