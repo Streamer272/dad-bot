@@ -13,13 +13,13 @@ class CustomClient(discord.Client):
         super().__init__(*args, **kwargs)
 
         self.__available_commands = [
-                ["help", "displays help message"],
-                ["set-status [true/false]", "Sets bot status"],
-                ["set-command-prefix \"<prefix>\"", "Sets command prefix"],
-                ["set-message \"<message>\"", "Sets response message"],
-                ["add-im-variation \"<variation>\"", "Adds im variation"],
-                ["remove-im-variation \"<variation>\"", "Removes im variation"]
-            ]
+            ["help", "displays help message"],
+            ["set-status [true/false]", "Sets bot status"],
+            ["set-command-prefix \"<prefix>\"", "Sets command prefix"],
+            ["set-message \"<message>\"", "Sets response message"],
+            ["add-im-variation \"<variation>\"", "Adds im variation"],
+            ["remove-im-variation \"<variation>\"", "Removes im variation"]
+        ]
 
     async def on_ready(self):
         print(f"Connected to Discord as {self.user}!")
@@ -49,9 +49,7 @@ class CustomClient(discord.Client):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
                     DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                                                                                        str(message.content).replace(
-                                                                                            str(message.content)[
-                                                                                            0:len(i)] + " ", ""))
+                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
                 )
 
     # noinspection PyMethodMayBeStatic
@@ -143,10 +141,11 @@ class CustomClient(discord.Client):
             return None
 
     async def on_error(self, event, *args, **kwargs):
-        Logger.log(
-            f"""Error occurred while handling event: {event}
-with args: {args}
-and kwargs: {kwargs}""")
+        Logger.log(f"""
+Error occurred while handling event: {event}
+    with args: {args}
+    and kwargs: {kwargs}
+""")
 
 
 def run():
