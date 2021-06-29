@@ -13,5 +13,5 @@ class Logger:
             mkdir("log")
 
         file = open(f"./log/log-{str(date.today())}.txt", "a")
-        file.write(f"{datetime.now()}: {message}\n")
+        file.write(f"{datetime.now()}: {message}\n\n")
         file.close()

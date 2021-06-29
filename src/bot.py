@@ -1,5 +1,6 @@
 import discord
 from json import loads, dumps
+
 from src.database_controller import DatabaseController
 from src.logger import Logger
 
@@ -19,7 +20,8 @@ class CustomClient(discord.Client):
 
         try:
             # command perform
-            if str(message.content).startswith(DatabaseController.get_value(message.guild.name, "command_prefix"), 0, 2):
+            if str(message.content).startswith(DatabaseController.get_value(message.guild.name,
+                                                                            "command_prefix"), 0, 2):
                 await self.perform_command(message)
                 return None
 
@@ -35,26 +37,37 @@ class CustomClient(discord.Client):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
                     DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
+                                                                                          str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
                 )
 
-    # TODO idea: maybe rework this using discord.ext.commands ??
-    # example: https://github.com/Rapptz/discord.py/blob/v1.7.2/examples/basic_bot.py
+    # TODO idea: send messages using embed
+    # TODO idea: change syntax, fe $set-message "Message..."
     # noinspection PyMethodMayBeStatic
     async def perform_command(self, message):
         # we don't want command prefix here
         message_content = str(message.content)[1:]
 
         if message_content == "help":
-            await message.channel.send("""```
-Available commands:
-    help - displays help message
-    set-status <true/false> - sets bot status
-    set-command-prefix <prefix> - sets command prefix
-    set-message <message> - sets response message
-    add-im-variation <variation> - adds im variation
-    remove-im-variation <variation> - removes im variation
-```""")
+            embed = discord.Embed(title="Available Commands",
+                                  color=discord.Color.blue())
+
+            commands = [
+                ["help", "displays help message"],
+                ["set-status [true/false]", "Sets bot status"],
+                ["set-command-prefix <prefix>", "Sets command prefix"],
+                ["set-message <message>", "Sets response message"],
+                ["add-im-variation <variation>", "Adds im variation"],
+                ["remove-im-variation <variation>", "Removes im variation"]
+            ]
+
+            for command in commands:
+                embed.add_field(
+                    name=command[0],
+                    value=command[1],
+                    inline=False
+                )
+
+            await message.channel.send(embed=embed)
 
         elif message_content.startswith("set-status"):
             DatabaseController.set_status(message.guild.name, "f" in message_content.replace("set-status ", ""))
@@ -81,7 +94,8 @@ Available commands:
         # TODO idea: maybe add variable getting (so they can know their im_variations and stuff)
 
     async def on_error(self, event, *args, **kwargs):
-        Logger.log(f"""Error occurred while handling event: {event}
+        Logger.log(
+            f"""Error occurred while handling event: {event}
 with args: {args}
 and kwargs: {kwargs}""")
 
