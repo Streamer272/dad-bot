@@ -1,11 +1,15 @@
+# virtual enviroments and libraries
 /venv
-/.idea
+/ss3dbc
 
-# we don't want user data in our repo
-config.json
-# we don't want token in our repo either
+# IDE folders
+/.idea
+/.vscode
+/.vs
+
+# discord tokens and files
 token
 
-/ss3dbc
+# databases, logs
 /db/*.sql
 /log/*.txt
