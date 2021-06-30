@@ -1,5 +1,5 @@
 import discord
-from json import loads, dumps
+from json import loads as load_json, dumps as dump_json
 from typing import List
 
 from src.database_controller import DatabaseController
@@ -64,10 +64,10 @@ class CustomClient(discord.Client):
                 return None
 
         except TypeError:
-            DatabaseController.create_record(message.guild.name, [])
+            DatabaseController.create_record(message.guild.name)
 
         # sending back dad-message
-        for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
+        for i in load_json(DatabaseController.get_value(message.guild.name, "im_variations")):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
                     DatabaseController.get_value(message.guild.name, "message").replace("<name>",
@@ -212,14 +212,14 @@ class CustomClient(discord.Client):
                                                                                       0).replace("'", ""))
 
     async def add_im_variation(self, message):
-        im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
+        im_variations = load_json(DatabaseController.get_value(message.guild.name, "im_variations"))
         im_variations.append(self.get_argument(str(message.content)[1:], 0))
-        DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
+        DatabaseController.set_value(message.guild.name, "im_variations", dump_json(im_variations))
 
     async def remove_im_variation(self, message):
-        im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
+        im_variations = load_json(DatabaseController.get_value(message.guild.name, "im_variations"))
         im_variations.remove(self.get_argument(str(message.content)[1:], 0))
-        DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
+        DatabaseController.set_value(message.guild.name, "im_variations", dump_json(im_variations))
 
     async def get_variable(self, message):
         variables = {
