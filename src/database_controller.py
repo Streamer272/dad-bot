@@ -5,6 +5,16 @@ from ss3dbc import Database
 class DatabaseController:
     # server management
     @staticmethod
+    def does_server_exist(server_name):
+        db = Database("./db/database.sql")
+
+        for line in db.get_table("server").data:
+            if line.data["server_name"] == server_name:
+                return True
+
+        return False
+
+    @staticmethod
     def create_server(
             server_name,
             im_variations=None,

@@ -78,7 +78,8 @@ class CustomClient(discord.Client):
                 return None
 
         except TypeError:
-            DatabaseController.create_server(message.guild.name)
+            if not DatabaseController.does_server_exist(message.guild.name):
+                DatabaseController.create_server(message.guild.name)
 
         # sending back dad-message
         for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):
