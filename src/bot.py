@@ -19,6 +19,10 @@ class CustomClient(discord.Client):
                     [Argument(0, "\"<command_name>\"", "command name", True, False)],
                     self.help),
 
+            Command("clear", "Clears amount of messages",
+                    [Argument(0, "\"<messages_count>\"", "messages count", False, True)],
+                    self.clear_messages),
+
             Command("set-status", "Sets bot active status",
                     [Argument(0, "[true/false]", "active value", False, True)],
                     self.set_status),
@@ -57,15 +61,14 @@ class CustomClient(discord.Client):
     async def on_message(self, message):
         await self.wait_until_ready()
 
-        if message.author == self.user:
+        if (message.author == self.user) or message.author.bot:
             return None
 
         try:
             # performing command
             if self.get_message_content(message).startswith(DatabaseController.get_server_value(message.guild.name,
                                                                                    "command_prefix"), 0, 2):
-                await self.perform_command(message)
-                return None
+                return await self.perform_command(message)
 
             # is enabled check
             if not DatabaseController.get_server_status(message.guild.name):
@@ -105,8 +108,7 @@ class CustomClient(discord.Client):
             embed = discord.Embed(title="Not administrator...", color=discord.Color.red(),
                                   description="Dad-Bot only accepts commands from administrators, sorry.")
 
-            await message.channel.send(embed=embed)
-            return None
+            return await message.channel.send(embed=embed)
 
         # checking if command exists
         command_to_execute = None
@@ -120,8 +122,7 @@ class CustomClient(discord.Client):
                                   description="Dad-Bot couldn't recognize your command, please check "
                                               "help to get list of all available commands.")
 
-            await message.channel.send(embed=embed)
-            return None
+            return await message.channel.send(embed=embed)
 
         # executing command
         for argument in command_to_execute.arguments:
@@ -131,12 +132,10 @@ class CustomClient(discord.Client):
                                       description=f"Woah! \"{command_to_execute.name}\" requires an argument, check it "
                                                   f"with help command.")
 
-                await message.channel.send(embed=embed)
-                return None
+                return await message.channel.send(embed=embed)
 
         await command_to_execute.callback(message)
 
-        # TODO: add clear command (clears amount of messages)
         # TODO: add dad-jokes like Joe, Candice etc...
 
     def get_argument(self, command: str, index: int):
@@ -182,6 +181,13 @@ class CustomClient(discord.Client):
             command_to_get_help_with_name = self.get_argument(self.get_message_content(message)[1:], 0)
             embed = None
 
+            if command_to_get_help_with_name is None:
+                embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                      description=f"Woah! \"help\" requires an argument, check it "
+                                                  f"with help command.")
+
+                return await message.channel.send(embed=embed)
+
             for command_to_get_help_with in self.__available_commands:
                 if command_to_get_help_with.name == command_to_get_help_with_name:
                     embed = discord.Embed(title=f"{command_to_get_help_with_name}", color=discord.Color.blue())
@@ -208,6 +214,28 @@ class CustomClient(discord.Client):
 
         await message.channel.send(embed=embed)
 
+    async def clear_messages(self, message):
+        count = self.get_message_content(message)[1:].replace("clear", "").replace(" ", "")
+
+        print("clearing")
+
+        if count == "":
+            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                  description=f"Woah! \"clear\" requires an argument, check it "
+                                              f"with help command.")
+
+            return await message.channel.send(embed=embed)
+
+        if int(count) >= 100:
+            embed = discord.Embed(title="Warning...", color=discord.Color.dark_gold(),
+                                  description=f"Woah! \"clear\" can't clear more than 100 messages, please enter "
+                                              f"lower number.")
+
+            return await message.channel.send(embed=embed)
+
+        async for message in message.channel.history(limit=int(count) + 1):
+            await message.delete()
+
     async def set_status(self, message):
         status = self.get_message_content(message)[1:].replace("set-status", "").replace(" ", "")
 
@@ -216,8 +244,7 @@ class CustomClient(discord.Client):
                                   description=f"Woah! \"set-status\" requires an argument, check it "
                                               f"with help command.")
 
-            await message.channel.send(embed=embed)
-            return None
+            return await message.channel.send(embed=embed)
 
         DatabaseController.set_server_status(message.guild.name, "t" in status)
 
