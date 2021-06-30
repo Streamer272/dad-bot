@@ -13,10 +13,9 @@ class CustomClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # TODO: add help command to display help about specific command
         self.__available_commands = [
             Command("help", "Displays help message",
-                    [Argument(0, "\"<command_name>\"", "active value", True, False)],
+                    [Argument(0, "\"<command_name>\"", "command name", True, False)],
                     self.help),
 
             Command("set-status", "Sets bot active status",
@@ -106,8 +105,8 @@ class CustomClient(discord.Client):
 
         # executing command
         for argument in command_to_execute.arguments:
-            print(argument)
-            if (argument.is_string and argument.required) and (not self.get_argument(message_content, command_to_execute.arguments.index(argument))):
+            if (argument.is_string and argument.required) and\
+                    (not self.get_argument(message_content, command_to_execute.arguments.index(argument))):
                 embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
                                       description=f"Woah! \"{command_to_execute.name}\" requires an argument, check it "
                                                   f"with help command.")
@@ -121,41 +120,70 @@ class CustomClient(discord.Client):
         # TODO: add variable getting (so they can know their im_variations and stuff)
         # TODO: add dad-jokes like Joe, Candice etc...
 
-        # noinspection PyMethodMayBeStatic
-        def get_argument(self, command: str, index: int):
-            # getting arguments
-            arguments = []
+    # noinspection PyMethodMayBeStatic
+    def get_argument(self, command: str, index: int):
+        # getting arguments
+        arguments = []
 
-            current_argument = ""
-            record = False
+        current_argument = ""
+        record = False
 
-            for char in command:
-                if char == "\"":
-                    if record:
-                        arguments.append(current_argument)
-                        current_argument = ""
+        for char in command:
+            if char == "\"":
+                if record:
+                    arguments.append(current_argument)
+                    current_argument = ""
 
-                    record = not record
+                record = not record
 
-                if record and char != "\"":
-                    current_argument += char
+            if record and char != "\"":
+                current_argument += char
 
-            try:
-                return arguments[index]
+        try:
+            return arguments[index]
 
-            except IndexError:
-                return None
+        except IndexError:
+            return None
 
     # commands callbacks
     async def help(self, message):
-        embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
+        if str(message.content)[1:].replace(" ", "") == "help":
+            embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
 
-        for command in self.__available_commands:
-            embed.add_field(
-                name=command.name,
-                value=command.description,
-                inline=False
-            )
+            for command in self.__available_commands:
+                embed.add_field(
+                    name=command.name,
+                    value=command.description,
+                    inline=False
+                )
+
+        else:
+            command_to_get_help_with_name = self.get_argument(str(message.content)[1:], 0)
+            embed = None
+
+            for command_to_get_help_with in self.__available_commands:
+                if command_to_get_help_with.name == command_to_get_help_with_name:
+                    embed = discord.Embed(title=f"{command_to_get_help_with_name}", color=discord.Color.blue())
+                    embed.add_field(
+                        name="Description",
+                        value=f"{command_to_get_help_with.description}",
+                        inline=False
+                    )
+
+                    for argument in command_to_get_help_with.arguments:
+                        embed.add_field(
+                            name=f"{argument.description}",
+                            value=f"{argument.example = }\n{argument.index = }\n{argument.is_string = }\n"
+                                  f"{argument.required = }",
+                            inline=True
+                        )
+
+                    break
+
+            if not embed:
+                embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                      description=f"Woah! \"{command_to_get_help_with_name}\" isn't registered in "
+                                                  f"list of commands, please check your spelling and try again.")
 
         await message.channel.send(embed=embed)
 
