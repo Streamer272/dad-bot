@@ -77,6 +77,7 @@ class CustomClient(discord.Client):
         except TypeError:
             DatabaseController.create_server(message.guild.name)
 
+
         # sending back dad-message
         for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):
             if self.get_message_content(message).lower().startswith(i.lower() + " ", 0):
@@ -113,7 +114,7 @@ class CustomClient(discord.Client):
         # checking if command exists
         command_to_execute = None
         for command in self.__available_commands:
-            if message_content.startswith(command.name.split(" ")[0]):
+            if message_content.startswith(command.name):
                 command_to_execute = command
                 break
 
