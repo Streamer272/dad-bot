@@ -106,3 +106,16 @@ class DatabaseController:
 
         return db.get_table("rekt").controller.query(
             f"SELECT {key} FROM rekt WHERE server_id='{id}' AND name='{rekt_name}'").fetchone()[0]
+
+    @staticmethod
+    def get_all_rekts(server_name):
+        db = Database("./db/database.sql")
+
+        id = DatabaseController.get_server_id_by_server_name(server_name)
+
+        rekts = []
+        for line in db.get_table("rekt").data:
+            if line.data["server_id"] == id:
+                rekts.append(line.data)
+
+        return rekts

@@ -43,6 +43,7 @@ class CustomClient(discord.Client):
                     [Argument(0, "\"<variable>\"", "variable name", True, True)],
                     self.get_variable),
 
+            # TODO: add edit/get/remove rekt
             Command("create-rekt", "Creates new rekt",
                     [Argument(0, "\"<name>\"", "rekt name", True, True),
                      Argument(1, "\"<on_message>\"", "triggering message", True, True),
@@ -54,37 +55,39 @@ class CustomClient(discord.Client):
         print(f"Connected to Discord as {self.user}!")
 
     async def on_message(self, message):
-        try:
-            await self.wait_until_ready()
+        await self.wait_until_ready()
 
-            if message.author == self.user:
+        if message.author == self.user:
+            return None
+
+        try:
+            # performing command
+            if self.get_message_content(message).startswith(DatabaseController.get_server_value(message.guild.name,
+                                                                                   "command_prefix"), 0, 2):
+                await self.perform_command(message)
                 return None
 
-            try:
-                # performing command
-                if str(message.content).startswith(DatabaseController.get_server_value(message.guild.name,
-                                                                                       "command_prefix"), 0, 2):
-                    await self.perform_command(message)
-                    return None
+            # is enabled check
+            if not DatabaseController.get_server_status(message.guild.name):
+                return None
 
-                # is enabled check
-                if DatabaseController.get_server_status(message.guild.name):
-                    return None
+        except TypeError:
+            DatabaseController.create_server(message.guild.name)
 
-            except TypeError:
-                DatabaseController.create_server(message.guild.name)
+        # sending back dad-message
+        for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):
+            if self.get_message_content(message).lower().startswith(i.lower() + " ", 0):
+                await message.channel.send(
+                    DatabaseController.get_server_value(message.guild.name, "message").replace("<name>",
+                       self.get_message_content(message).replace(self.get_message_content(message)[0:len(i)] + " ", ""))
+                )
+                break
 
-            # sending back dad-message
-            for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):
-                if str(message.content).lower().startswith(i.lower() + " ", 0):
-                    await message.channel.send(
-                        DatabaseController.get_server_value(message.guild.name, "message").replace("<name>",
-                                                                                                   str(message.content).replace(
-                                                                                                       str(message.content)[
-                                                                                                       0:len(i)] + " ", ""))
-                    )
-        except Exception as e:
-            print(e)
+        # sending back rekts
+        for i in DatabaseController.get_all_rekts(message.guild.name):
+            if self.get_message_content(message).lower() == i["on_message"]:
+                await message.channel.send(i["response"])
+                break
 
     async def on_error(self, event, *args, **kwargs):
         Logger.log(f"""
@@ -96,7 +99,7 @@ class CustomClient(discord.Client):
     # class functions
     async def perform_command(self, message):
         # we don't want command prefix here
-        message_content = str(message.content)[1:]
+        message_content = self.get_message_content(message)[1:]
 
         if not message.author.guild_permissions.administrator:
             embed = discord.Embed(title="Not administrator...", color=discord.Color.red(),
@@ -160,9 +163,12 @@ class CustomClient(discord.Client):
         except IndexError:
             return None
 
+    def get_message_content(self, message):
+        return str(message.content).replace("'", "")
+
     # command callbacks
     async def help(self, message):
-        if str(message.content)[1:].replace(" ", "") == "help":
+        if self.get_message_content(message)[1:].replace(" ", "") == "help":
             embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
 
             for command in self.__available_commands:
@@ -173,7 +179,7 @@ class CustomClient(discord.Client):
                 )
 
         else:
-            command_to_get_help_with_name = self.get_argument(str(message.content)[1:], 0)
+            command_to_get_help_with_name = self.get_argument(self.get_message_content(message)[1:], 0)
             embed = None
 
             for command_to_get_help_with in self.__available_commands:
@@ -203,9 +209,9 @@ class CustomClient(discord.Client):
         await message.channel.send(embed=embed)
 
     async def set_status(self, message):
-        status = str(message.content)[1:].replace("set-status", "").replace(" ", "")
+        status = self.get_message_content(message)[1:].replace("set-status", "").replace(" ", "")
 
-        if not status:
+        if status == "":
             embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
                                   description=f"Woah! \"set-status\" requires an argument, check it "
                                               f"with help command.")
@@ -213,25 +219,24 @@ class CustomClient(discord.Client):
             await message.channel.send(embed=embed)
             return None
 
-        DatabaseController.set_server_status(message.guild.name, "f" in status)
+        DatabaseController.set_server_status(message.guild.name, "t" in status)
 
     async def set_command_prefix(self, message):
         DatabaseController.set_server_value(message.guild.name, "command_prefix",
-                                            self.get_argument(str(message.content)[1:],
-                                                              0))
+                                            self.get_argument(self.get_message_content(message)[1:], 0))
 
     async def set_message(self, message):
-        DatabaseController.set_server_value(message.guild.name, "message", self.get_argument(str(message.content)[1:],
-                                                                                             0).replace("'", ""))
+        DatabaseController.set_server_value(message.guild.name, "message", self.get_argument(
+            self.get_message_content(message)[1:], 0).replace("'", ""))
 
     async def add_im_variation(self, message):
         im_variations = load_json(DatabaseController.get_server_value(message.guild.name, "im_variations"))
-        im_variations.append(self.get_argument(str(message.content)[1:], 0))
+        im_variations.append(self.get_argument(self.get_message_content(message)[1:], 0))
         DatabaseController.set_server_value(message.guild.name, "im_variations", dump_json(im_variations))
 
     async def remove_im_variation(self, message):
         im_variations = load_json(DatabaseController.get_server_value(message.guild.name, "im_variations"))
-        im_variations.remove(self.get_argument(str(message.content)[1:], 0))
+        im_variations.remove(self.get_argument(self.get_message_content(message)[1:], 0))
         DatabaseController.set_server_value(message.guild.name, "im_variations", dump_json(im_variations))
 
     async def get_variable(self, message):
@@ -239,27 +244,28 @@ class CustomClient(discord.Client):
             "command_prefix": DatabaseController.get_server_value(message.guild.name, "command_prefix"),
             "im_variations": DatabaseController.get_server_value(message.guild.name, "im_variations"),
             "message": DatabaseController.get_server_value(message.guild.name, "message"),
-            "enabled": DatabaseController.get_server_value(message.guild.name, "enabled"),
+            "enabled": bool(DatabaseController.get_server_value(message.guild.name, "enabled")),
+            "status": bool(DatabaseController.get_server_value(message.guild.name, "enabled")),
         }
 
-        variable_content = variables[self.get_argument(str(message.content), 0)]
+        variable_content = variables.get(self.get_argument(self.get_message_content(message), 0))
 
-        if not variable_content:
+        if variable_content is None:
             embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
-                                  description=f"Woah! \"{self.get_argument(str(message.content), 0)}\" isn't "
-                                              f"registered in list of variables, please check your spelling and try "
-                                              f"again.")
+                                  description=f"Woah! \"{self.get_argument(self.get_message_content(message), 0)}\" "
+                                              f"isn't registered in list of variables, please check your spelling and "
+                                              f"try again.")
 
         else:
-            embed = discord.Embed(title=f"{self.get_argument(str(message.content), 0)}", color=discord.Color.red(),
-                                  description=f"{variable_content}")
+            embed = discord.Embed(title=f"{self.get_argument(self.get_message_content(message), 0)}",
+                                  color=discord.Color.red(), description=f"{variable_content}")
 
         await message.channel.send(embed=embed)
 
     async def create_rekt(self, message):
-        DatabaseController.create_rekt(message.guild.name, self.get_argument(str(message.content), 0),
-                                       self.get_argument(str(message.content), 1),
-                                       self.get_argument(str(message.content), 2))
+        DatabaseController.create_rekt(message.guild.name, self.get_argument(self.get_message_content(message), 0),
+                                       self.get_argument(self.get_message_content(message), 1),
+                                       self.get_argument(self.get_message_content(message), 2))
 
 
 def run():
