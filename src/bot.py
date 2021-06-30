@@ -13,22 +13,30 @@ class CustomClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # TODO: add help command to display help about specific command
         self.__available_commands = [
-            Command("help", "Displays help message", [Argument(0, "\"<command_name>\"", "active value", False,
-                                                               False)], self.help),
-            Command("set-status", "Sets bot active status", [Argument(0, "[true/false]", "active value", False,
-                                                                      True)], self.set_status),
-            Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix",
-                                                                               True, True)],
+            Command("help", "Displays help message",
+                    [Argument(0, "\"<command_name>\"", "active value", True, False)],
+                    self.help),
+
+            Command("set-status", "Sets bot active status",
+                    [Argument(0, "[true/false]", "active value", False, True)],
+                    self.set_status),
+
+            Command("set-command-prefix", "Sets bot command prefix",
+                    [Argument(0, "\"<prefix>\"", "command prefix", True, True)],
                     self.set_command_prefix),
-            Command("set-message", "Sets bot response message", [Argument(0, "\"<message>\"", "response message", True,
-                                                                          True)],
+
+            Command("set-message", "Sets bot response message",
+                    [Argument(0, "\"<message>\"", "response message", True, True)],
                     self.set_message),
-            Command("add-im-variation", "Adds im variation", [Argument(0, "\"<im_variation>\"", "im variation", True,
-                                                                       True)],
+
+            Command("add-im-variation", "Adds im variation",
+                    [Argument(0, "\"<im_variation>\"", "im variation", True, True)],
                     self.add_im_variation),
-            Command("remove-im-variation", "Removes im variation", [Argument(0, "\"<im_variation>\"", "im variation",
-                                                                             True, True)],
+
+            Command("remove-im-variation", "Removes im variation",
+                    [Argument(0, "\"<im_variation>\"", "im variation", True, True)],
                     self.remove_im_variation)
         ]
 
@@ -62,6 +70,13 @@ class CustomClient(discord.Client):
                     DatabaseController.get_value(message.guild.name, "message").replace("<name>", str(message.content)
                         .replace(str(message.content)[0:len(i)] + " ", ""))
                 )
+
+    async def on_error(self, event, *args, **kwargs):
+            Logger.log(f"""
+        Error occurred while handling event: {event}
+            with args: {args}
+            and kwargs: {kwargs}
+    """)
 
     async def perform_command(self, message):
         # we don't want command prefix here
@@ -106,37 +121,30 @@ class CustomClient(discord.Client):
         # TODO: add variable getting (so they can know their im_variations and stuff)
         # TODO: add dad-jokes like Joe, Candice etc...
 
-    # noinspection PyMethodMayBeStatic
-    def get_argument(self, command: str, index: int):
-        # getting arguments
-        arguments = []
+        # noinspection PyMethodMayBeStatic
+        def get_argument(self, command: str, index: int):
+            # getting arguments
+            arguments = []
 
-        current_argument = ""
-        record = False
+            current_argument = ""
+            record = False
 
-        for char in command:
-            if char == "\"":
-                if record:
-                    arguments.append(current_argument)
-                    current_argument = ""
+            for char in command:
+                if char == "\"":
+                    if record:
+                        arguments.append(current_argument)
+                        current_argument = ""
 
-                record = not record
+                    record = not record
 
-            if record and char != "\"":
-                current_argument += char
+                if record and char != "\"":
+                    current_argument += char
 
-        try:
-            return arguments[index]
+            try:
+                return arguments[index]
 
-        except IndexError:
-            return None
-
-    async def on_error(self, event, *args, **kwargs):
-        Logger.log(f"""
-    Error occurred while handling event: {event}
-        with args: {args}
-        and kwargs: {kwargs}
-""")
+            except IndexError:
+                return None
 
     # commands callbacks
     async def help(self, message):
@@ -181,6 +189,9 @@ class CustomClient(discord.Client):
         im_variations = loads(DatabaseController.get_value(message.guild.name, "im_variations"))
         im_variations.remove(self.get_argument(str(message.content)[1:], 0))
         DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
+
+    async def get_variable(self, message):
+        pass
 
 
 def run():

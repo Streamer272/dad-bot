@@ -7,7 +7,6 @@ class Argument:
     index: int
     example: str
     description: str
-    # TODO: make these actually work
     is_string: bool
     required: bool
 
