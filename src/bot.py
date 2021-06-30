@@ -52,6 +52,10 @@ class CustomClient(discord.Client):
                      Argument(1, "\"<on_message>\"", "triggering message", True, True),
                      Argument(2, "\"<response>\"", "rekt response", True, True)],
                     self.create_rekt),
+
+            Command("get-rekt", "Gets all rekts",
+                    [Argument(0, "\"<rekt_name>\"", "rekt name", True, False)],
+                    self.get_rekt),
         ]
 
     async def on_ready(self):
@@ -123,7 +127,7 @@ class CustomClient(discord.Client):
 
             return await message.channel.send(embed=embed)
 
-        # executing command
+        # checking if all arguments are present
         for argument in command_to_execute.arguments:
             if (argument.is_string and argument.required) and \
                     (not self.get_argument(message_content, command_to_execute.arguments.index(argument))):
@@ -133,6 +137,7 @@ class CustomClient(discord.Client):
 
                 return await message.channel.send(embed=embed)
 
+        # executing command
         await command_to_execute.callback(message)
 
         # TODO: add dad-jokes like Joe, Candice etc...
@@ -216,8 +221,6 @@ class CustomClient(discord.Client):
     async def clear_messages(self, message):
         count = self.get_message_content(message)[1:].replace("clear", "").replace(" ", "")
 
-        print("clearing")
-
         if count == "":
             embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
                                   description=f"Woah! \"clear\" requires an argument, check it "
@@ -292,6 +295,46 @@ class CustomClient(discord.Client):
         DatabaseController.create_rekt(message.guild.name, self.get_argument(self.get_message_content(message), 0),
                                        self.get_argument(self.get_message_content(message), 1),
                                        self.get_argument(self.get_message_content(message), 2))
+
+    async def get_rekt(self, message):
+        if self.get_message_content(message)[1:].replace(" ", "") == "get-rekt":
+            embed = discord.Embed(title="Rekts", color=discord.Color.blue())
+
+            for rekt in DatabaseController.get_all_rekts(message.guild.name):
+                embed.add_field(
+                    name=rekt["name"],
+                    value=f"On Message = {rekt['on_message']!a}\nResponse = {rekt['response']!a}",
+                    inline=False
+                )
+
+        else:
+            rekt_name_to_get_help_with = self.get_argument(self.get_message_content(message)[1:], 0)
+            embed = None
+
+            if rekt_name_to_get_help_with is None:
+                embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                      description=f"Woah! \"get-rekt\" requires an argument, check it "
+                                                  f"with help command.")
+
+                return await message.channel.send(embed=embed)
+
+            for rekt in DatabaseController.get_all_rekts(message.guild.name):
+                if rekt["name"] == rekt_name_to_get_help_with:
+                    embed = discord.Embed(title=f"Rekt number {rekt['id']}", color=discord.Color.blue())
+                    embed.add_field(
+                        name=rekt["name"],
+                        value=f"On Message = {rekt['on_message']}\nResponse = {rekt['response']}",
+                        inline=False
+                    )
+
+                    break
+
+            if not embed:
+                embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                      description=f"Woah! \"{rekt_name_to_get_help_with}\" isn't registered in "
+                                                  f"list of rekts, please check your spelling and try again.")
+
+        await message.channel.send(embed=embed)
 
 
 def run():
