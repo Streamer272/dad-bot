@@ -16,8 +16,7 @@ class CustomClient(discord.Client):
         self.__available_commands = [
             Command("help", "Displays help message", [Argument(0, "\"<command_name>\"", "active value", False,
                                                                False)], self.help),
-            # TODO: rework this so you don't have to "true" / "false" -> true / false
-            Command("set-status", "Sets bot active status", [Argument(0, "[\"true\"/\"false\"]", "active value", False,
+            Command("set-status", "Sets bot active status", [Argument(0, "[true/false]", "active value", False,
                                                                       True)], self.set_status),
             Command("set-command-prefix", "Sets bot command prefix", [Argument(0, "\"<prefix>\"", "command prefix",
                                                                                True, True)],
@@ -49,7 +48,7 @@ class CustomClient(discord.Client):
                 await self.perform_command(message)
                 return None
 
-            # is disabled check
+            # is enabled check
             if DatabaseController.get_status(message.guild.name):
                 return None
 
@@ -60,16 +59,13 @@ class CustomClient(discord.Client):
         for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
-                    DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                                                                                        str(message.content).replace(
-                                                                                            str(message.content)[
-                                                                                            0:len(i)] + " ", ""))
+                    DatabaseController.get_value(message.guild.name, "message").replace("<name>", str(message.content)
+                        .replace(str(message.content)[0:len(i)] + " ", ""))
                 )
 
     async def perform_command(self, message):
         # we don't want command prefix here
         message_content = str(message.content)[1:]
-        first_argument = self.get_argument(message_content, 0)
 
         if not message.author.guild_permissions.administrator:
             embed = discord.Embed(title="Not administrator...", color=discord.Color.red(),
@@ -93,13 +89,16 @@ class CustomClient(discord.Client):
             await message.channel.send(embed=embed)
             return None
 
-        if (len(command_to_execute.arguments) != 0) and (not first_argument):
-            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
-                                  description=f"Woah! \"{command_to_execute.name}\" requires an argument, check it"
-                                              f"with help command.")
+        # executing command
+        for argument in command_to_execute.arguments:
+            print(argument)
+            if (argument.is_string and argument.required) and (not self.get_argument(message_content, command_to_execute.arguments.index(argument))):
+                embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                      description=f"Woah! \"{command_to_execute.name}\" requires an argument, check it "
+                                                  f"with help command.")
 
-            await message.channel.send(embed=embed)
-            return None
+                await message.channel.send(embed=embed)
+                return None
 
         await command_to_execute.callback(message)
 
@@ -139,7 +138,7 @@ class CustomClient(discord.Client):
         and kwargs: {kwargs}
 """)
 
-    # commands
+    # commands callbacks
     async def help(self, message):
         embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
 
@@ -153,7 +152,17 @@ class CustomClient(discord.Client):
         await message.channel.send(embed=embed)
 
     async def set_status(self, message):
-        DatabaseController.set_status(message.guild.name, "f" in self.get_argument(str(message.content)[1:], 0))
+        status = str(message.content)[1:].replace("set-status", "").replace(" ", "")
+
+        if not status:
+            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                  description=f"Woah! \"set-status\" requires an argument, check it "
+                                              f"with help command.")
+
+            await message.channel.send(embed=embed)
+            return None
+
+        DatabaseController.set_status(message.guild.name, "f" in status)
 
     async def set_command_prefix(self, message):
         DatabaseController.set_value(message.guild.name, "command_prefix", self.get_argument(str(message.content)[1:],
