@@ -49,7 +49,7 @@ class CustomClient(discord.Client):
             return None
 
         try:
-            # command perform
+            # performing command
             if str(message.content).startswith(DatabaseController.get_value(message.guild.name,
                                                                             "command_prefix"), 0, 2):
                 await self.perform_command(message)
@@ -62,21 +62,22 @@ class CustomClient(discord.Client):
         except TypeError:
             DatabaseController.create_record(message.guild.name, [])
 
-        # sending back message
+        # sending back dad-message
         for i in loads(DatabaseController.get_value(message.guild.name, "im_variations")):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
-                    DatabaseController.get_value(message.guild.name, "message").replace("<name>", str(message.content)
-                        .replace(str(message.content)[0:len(i)] + " ", ""))
+                    DatabaseController.get_value(message.guild.name, "message").replace("<name>",
+                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
                 )
 
     async def on_error(self, event, *args, **kwargs):
-            Logger.log(f"""
+        Logger.log(f"""
         Error occurred while handling event: {event}
             with args: {args}
             and kwargs: {kwargs}
     """)
 
+    # class functions
     async def perform_command(self, message):
         # we don't want command prefix here
         message_content = str(message.content)[1:]
@@ -105,7 +106,7 @@ class CustomClient(discord.Client):
 
         # executing command
         for argument in command_to_execute.arguments:
-            if (argument.is_string and argument.required) and\
+            if (argument.is_string and argument.required) and \
                     (not self.get_argument(message_content, command_to_execute.arguments.index(argument))):
                 embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
                                       description=f"Woah! \"{command_to_execute.name}\" requires an argument, check it "
@@ -120,7 +121,6 @@ class CustomClient(discord.Client):
         # TODO: add variable getting (so they can know their im_variations and stuff)
         # TODO: add dad-jokes like Joe, Candice etc...
 
-    # noinspection PyMethodMayBeStatic
     def get_argument(self, command: str, index: int):
         # getting arguments
         arguments = []
@@ -145,7 +145,7 @@ class CustomClient(discord.Client):
         except IndexError:
             return None
 
-    # commands callbacks
+    # command callbacks
     async def help(self, message):
         if str(message.content)[1:].replace(" ", "") == "help":
             embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
