@@ -3,8 +3,9 @@ from ss3dbc import Database
 
 
 class DatabaseController:
+    # server management
     @staticmethod
-    def create_record(
+    def create_server(
             server_name,
             im_variations=None,
             rekts=None,
@@ -26,7 +27,7 @@ class DatabaseController:
         db.close()
 
     @staticmethod
-    def set_value(server_name, key, value):
+    def set_server_value(server_name, key, value):
         db = Database("./db/database.sql")
 
         db.get_table("server").update_record(f"server_name='{server_name}'", f"{key}='{value}'")
@@ -34,7 +35,7 @@ class DatabaseController:
         db.close()
 
     @staticmethod
-    def set_status(server_name, enabled):
+    def set_server_status(server_name, enabled):
         db = Database("./db/database.sql")
 
         db.get_table("server").update_record(f"server_name='{server_name}'", f"enabled={enabled}")
@@ -42,15 +43,66 @@ class DatabaseController:
         db.close()
 
     @staticmethod
-    def get_value(server_name, key):
+    def get_server_value(server_name, key):
         db = Database("./db/database.sql")
 
         return db.get_table("server").controller.query(
-            f"SELECT {key} FROM Server WHERE server_name='{server_name}'").fetchone()[0]
+            f"SELECT {key} FROM server WHERE server_name='{server_name}'").fetchone()[0]
 
     @staticmethod
-    def get_status(server_name):
+    def get_server_status(server_name):
         db = Database("./db/database.sql")
 
         return bool(db.get_table("server").controller.query(
-            f"SELECT enabled FROM Server WHERE server_name='{server_name}'").fetchone()[0])
+            f"SELECT enabled FROM server WHERE server_name='{server_name}'").fetchone()[0])
+
+    # rekt management
+    @staticmethod
+    def get_server_id_by_server_name(server_name):
+        db = Database("./db/database.sql")
+
+        id = None
+        for line in db.get_table("server").data:
+            if line.data["server_name"] == server_name:
+                id = line.id
+
+        if id is None:
+            raise TypeError(f"Couldn't find server with name {server_name}")
+
+        return id
+
+    @staticmethod
+    def create_rekt(
+            server_name,
+            name,
+            on_message,
+            response
+    ):
+        db = Database("./db/database.sql")
+
+        id = DatabaseController.get_server_id_by_server_name(server_name)
+
+        db.get_table("rekt").add_record(
+            f"{id}, '{name}', '{on_message}', '{response}'"
+        )
+
+        db.close()
+
+    @staticmethod
+    def set_rekt_value(server_name, rekt_name, key, value):
+        db = Database("./db/database.sql")
+
+        id = DatabaseController.get_server_id_by_server_name(server_name)
+
+        db.get_table("rekt").update_record(f"server_id='{id}' AND name='{rekt_name}'", f"{key}='{value}'")
+
+        db.close()
+
+    @staticmethod
+    def get_rekt_value(server_name, rekt_name, key):
+        db = Database("./db/database.sql")
+
+        id = DatabaseController.get_server_id_by_server_name(server_name)
+
+        return db.get_table("rekt").controller.query(
+            f"SELECT {key} FROM rekt WHERE server_id='{id}' AND name='{rekt_name}'").fetchone()[0]

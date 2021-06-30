@@ -54,24 +54,24 @@ class CustomClient(discord.Client):
 
         try:
             # performing command
-            if str(message.content).startswith(DatabaseController.get_value(message.guild.name,
+            if str(message.content).startswith(DatabaseController.get_server_value(message.guild.name,
                                                                             "command_prefix"), 0, 2):
                 await self.perform_command(message)
                 return None
 
             # is enabled check
-            if DatabaseController.get_status(message.guild.name):
+            if DatabaseController.get_server_status(message.guild.name):
                 return None
 
         except TypeError:
-            DatabaseController.create_record(message.guild.name)
+            DatabaseController.create_server(message.guild.name)
 
         # sending back dad-message
-        for i in load_json(DatabaseController.get_value(message.guild.name, "im_variations")):
+        for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):
             if str(message.content).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
-                    DatabaseController.get_value(message.guild.name, "message").replace("<name>",
-                        str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
+                    DatabaseController.get_server_value(message.guild.name, "message").replace("<name>",
+                                                                                               str(message.content).replace(str(message.content)[0:len(i)] + " ", ""))
                 )
 
     async def on_error(self, event, *args, **kwargs):
@@ -201,32 +201,32 @@ class CustomClient(discord.Client):
             await message.channel.send(embed=embed)
             return None
 
-        DatabaseController.set_status(message.guild.name, "f" in status)
+        DatabaseController.set_server_status(message.guild.name, "f" in status)
 
     async def set_command_prefix(self, message):
-        DatabaseController.set_value(message.guild.name, "command_prefix", self.get_argument(str(message.content)[1:],
-                                                                                             0))
+        DatabaseController.set_server_value(message.guild.name, "command_prefix", self.get_argument(str(message.content)[1:],
+                                                                                                    0))
 
     async def set_message(self, message):
-        DatabaseController.set_value(message.guild.name, "message", self.get_argument(str(message.content)[1:],
-                                                                                      0).replace("'", ""))
+        DatabaseController.set_server_value(message.guild.name, "message", self.get_argument(str(message.content)[1:],
+                                                                                             0).replace("'", ""))
 
     async def add_im_variation(self, message):
-        im_variations = load_json(DatabaseController.get_value(message.guild.name, "im_variations"))
+        im_variations = load_json(DatabaseController.get_server_value(message.guild.name, "im_variations"))
         im_variations.append(self.get_argument(str(message.content)[1:], 0))
-        DatabaseController.set_value(message.guild.name, "im_variations", dump_json(im_variations))
+        DatabaseController.set_server_value(message.guild.name, "im_variations", dump_json(im_variations))
 
     async def remove_im_variation(self, message):
-        im_variations = load_json(DatabaseController.get_value(message.guild.name, "im_variations"))
+        im_variations = load_json(DatabaseController.get_server_value(message.guild.name, "im_variations"))
         im_variations.remove(self.get_argument(str(message.content)[1:], 0))
-        DatabaseController.set_value(message.guild.name, "im_variations", dump_json(im_variations))
+        DatabaseController.set_server_value(message.guild.name, "im_variations", dump_json(im_variations))
 
     async def get_variable(self, message):
         variables = {
-            "command_prefix": DatabaseController.get_value(message.guild.name, "command_prefix"),
-            "im_variations": DatabaseController.get_value(message.guild.name, "im_variations"),
-            "message": DatabaseController.get_value(message.guild.name, "message"),
-            "enabled": DatabaseController.get_value(message.guild.name, "enabled"),
+            "command_prefix": DatabaseController.get_server_value(message.guild.name, "command_prefix"),
+            "im_variations": DatabaseController.get_server_value(message.guild.name, "im_variations"),
+            "message": DatabaseController.get_server_value(message.guild.name, "message"),
+            "enabled": DatabaseController.get_server_value(message.guild.name, "enabled"),
         }
 
         variable_content = variables[self.get_argument(str(message.content), 0)]

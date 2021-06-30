@@ -7,9 +7,12 @@
 /.vscode
 /.vs
 
-# discord tokens and files
+# discord tokens and discord files
 token
 
 # databases, logs
 /db/*.sql
 /log/*.txt
+
+# test files
+/src/test.py
