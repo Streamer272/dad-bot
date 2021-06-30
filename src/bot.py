@@ -1,7 +1,6 @@
 import discord
 from json import loads as load_json, dumps as dump_json
 from typing import List
-from functools import cache
 
 from src.database_controller import DatabaseController
 from src.logger import Logger
@@ -76,7 +75,6 @@ class CustomClient(discord.Client):
 
         except TypeError:
             DatabaseController.create_server(message.guild.name)
-
 
         # sending back dad-message
         for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):

@@ -1,6 +1,6 @@
 # virtual enviroments and libraries
 /venv
-/ss3dbc
+#/ss3dbc
 
 # IDE folders
 /.idea
