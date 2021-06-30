@@ -36,7 +36,11 @@ class CustomClient(discord.Client):
 
             Command("remove-im-variation", "Removes im variation",
                     [Argument(0, "\"<im_variation>\"", "im variation", True, True)],
-                    self.remove_im_variation)
+                    self.remove_im_variation),
+
+            Command("get-variable", "Displays variable content",
+                    [Argument(0, "\"<variable>\"", "variable name", True, True)],
+                    self.get_variable),
         ]
 
     async def on_ready(self):
@@ -118,7 +122,6 @@ class CustomClient(discord.Client):
         await command_to_execute.callback(message)
 
         # TODO: add clear command (clears amount of messages)
-        # TODO: add variable getting (so they can know their im_variations and stuff)
         # TODO: add dad-jokes like Joe, Candice etc...
 
     def get_argument(self, command: str, index: int):
@@ -219,7 +222,26 @@ class CustomClient(discord.Client):
         DatabaseController.set_value(message.guild.name, "im_variations", dumps(im_variations))
 
     async def get_variable(self, message):
-        pass
+        variables = {
+            "command_prefix": DatabaseController.get_value(message.guild.name, "command_prefix"),
+            "im_variations": DatabaseController.get_value(message.guild.name, "im_variations"),
+            "message": DatabaseController.get_value(message.guild.name, "message"),
+            "enabled": DatabaseController.get_value(message.guild.name, "enabled"),
+        }
+
+        variable_content = variables[self.get_argument(str(message.content), 0)]
+
+        if not variable_content:
+            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                  description=f"Woah! \"{self.get_argument(str(message.content), 0)}\" isn't "
+                                              f"registered in list of variables, please check your spelling and try "
+                                              f"again.")
+
+        else:
+            embed = discord.Embed(title=f"{self.get_argument(str(message.content), 0)}", color=discord.Color.red(),
+                                  description=f"{variable_content}")
+
+        await message.channel.send(embed=embed)
 
 
 def run():
