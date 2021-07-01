@@ -74,7 +74,7 @@ class CustomClient(discord.Client):
         try:
             # performing command
             if self.get_message_content(message).startswith(DatabaseController.get_server_value(message.guild.name,
-                                                                                   "command_prefix"), 0, 2):
+                                                                                               "command_prefix"), 0, 2):
                 return await self.perform_command(message)
 
             # is enabled check
@@ -146,6 +146,7 @@ class CustomClient(discord.Client):
         await command_to_execute.callback(message)
 
         # TODO: add dad-jokes like Joe, Candice etc...
+        # TODO: add counter trolls: ('...try again'; user_input=again; output=some response)
 
     def get_argument(self, command: str, index: int):
         # getting arguments
@@ -348,8 +349,20 @@ class CustomClient(discord.Client):
         await message.channel.send(embed=embed)
 
     async def remove_rekt(self, message):
-        # TODO: add check if rekt exists
-        DatabaseController.remove_rekt(message.guild.name, self.get_argument(message.content, 0))
+        rekts = DatabaseController.get_all_rekts(message.guild.name)
+
+        for rekt in rekts:
+            if rekt["name"] == self.get_argument(self.get_message_content(message), 0):
+                return DatabaseController.remove_rekt(message.guild.name,
+                                                      self.get_argument(self.get_message_content(message),
+                                                                        0))
+
+        embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                              description=f"Woah! \"{self.get_argument(self.get_message_content(message), 0)}\""
+                                          f" isn't registered in list of rekts, please check your spelling and try "
+                                          f"again.")
+
+        await message.channel.send(embed=embed)
 
 
 def run():

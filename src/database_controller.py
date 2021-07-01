@@ -105,7 +105,7 @@ class DatabaseController:
         id = DatabaseController.get_server_id_by_server_name(server_name)
 
         db.get_table("rekt").delete_record(
-            f"server_id={id} AND name={rekt_name}"
+            f"server_id={id} AND name='{rekt_name}'"
         )
 
         db.close()
