@@ -242,8 +242,6 @@ class CustomClient(discord.Client):
         return await message.channel.send(embed=embed)
 
     async def clear_messages(self, message):
-        # TODO: fix performance
-
         count = self.get_message_content(message)[1:].replace("clear", "").replace(" ", "")
 
         if count == "":
@@ -253,13 +251,14 @@ class CustomClient(discord.Client):
 
             return await message.channel.send(embed=embed)
 
-        if int(count) >= 100:
+        if int(count) >= 50:
             embed = discord.Embed(title="Warning...", color=discord.Color.dark_gold(),
-                                  description=f"Woah! \"clear\" can't clear more than 100 messages, please enter "
+                                  description=f"Woah! \"clear\" can't clear more than 50 messages, please enter "
                                               f"lower number.")
 
             return await message.channel.send(embed=embed)
 
+        # TODO: fix performance
         async for message in message.channel.history(limit=int(count) + 1):
             await message.delete()
 
