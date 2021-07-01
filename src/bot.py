@@ -227,8 +227,8 @@ class CustomClient(discord.Client):
                     for argument in command_to_get_help_with.arguments:
                         embed.add_field(
                             name=f"{argument.description}",
-                            value=f"{argument.example = }\n{argument.index = }\n{argument.is_string = }\n"
-                                  f"{argument.required = }",
+                            value=f"Example = {argument.example}\nIndex = {argument.index}\nIs string ="
+                                  f"{argument.is_string}\nRequired = {argument.required}",
                             inline=True
                         )
 
