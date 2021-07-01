@@ -46,7 +46,6 @@ class CustomClient(discord.Client):
                     [Argument(0, "\"<variable>\"", "variable name", True, True)],
                     self.get_variable),
 
-            # TODO: add edit rekt
             Command("add-rekt", "Creates new rekt",
                     [Argument(0, "\"<name>\"", "rekt name", True, True),
                      Argument(1, "\"<on_message>\"", "triggering message", True, True),
@@ -93,7 +92,7 @@ class CustomClient(discord.Client):
 
         # sending back dad-message
         for i in load_json(DatabaseController.get_server_value(message.guild.name, "im_variations")):
-            if self.get_message_content(message).lower().startswith(i.lower() + " ", 0):
+            if self.strip_message_from_additional_symbols(message).lower().startswith(i.lower() + " ", 0):
                 await message.channel.send(
                     DatabaseController.get_server_value(message.guild.name, "message").replace("<name>",
                        self.get_message_content(message).replace(self.get_message_content(message)[0:len(i)] + " ", ""))
@@ -102,8 +101,7 @@ class CustomClient(discord.Client):
 
         # sending back rekts
         for i in DatabaseController.get_all_rekts(message.guild.name):
-            # TODO: strip message on additional symbols (., ,, ?, !, etc.)
-            if self.get_message_content(message).lower() == i["on_message"]:
+            if self.strip_message_from_additional_symbols(message).lower() == i["on_message"]:
                 await message.channel.send(i["response"])
                 break
 
@@ -180,6 +178,15 @@ class CustomClient(discord.Client):
 
     def get_message_content(self, message):
         return str(message.content).replace("'", "")
+
+    def strip_message_from_additional_symbols(self, message):
+        message_content = self.get_message_content(message)
+        symbols = ["!", ",", "?", ".", "@", "-", "'"]
+
+        for symbol in symbols:
+            message_content = message_content.replace(symbol, "")
+
+        return message_content
 
     # command callbacks
     async def help(self, message):
