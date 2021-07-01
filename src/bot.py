@@ -60,6 +60,12 @@ class CustomClient(discord.Client):
             Command("remove-rekt", "Removes rekt",
                     [Argument(0, "\"<rekt_name>\"", "rekt name", True, True)],
                     self.remove_rekt),
+
+            Command("edit-rekt", "Edits rekt",
+                    [Argument(0, "\"<rekt_name>\"", "rekt name", True, True),
+                     Argument(0, "\"<rekt_key>\"", "rekt key", True, True),
+                     Argument(0, "\"<rekt_value>\"", "rekt value", True, True)],
+                    self.edit_rekt),
         ]
 
     async def on_ready(self):
@@ -96,6 +102,7 @@ class CustomClient(discord.Client):
 
         # sending back rekts
         for i in DatabaseController.get_all_rekts(message.guild.name):
+            # TODO: strip message on additional symbols (., ,, ?, !, etc.)
             if self.get_message_content(message).lower() == i["on_message"]:
                 await message.channel.send(i["response"])
                 break
@@ -145,7 +152,6 @@ class CustomClient(discord.Client):
         # executing command
         await command_to_execute.callback(message)
 
-        # TODO: add dad-jokes like Joe, Candice etc...
         # TODO: add counter trolls: ('...try again'; user_input=again; output=some response)
 
     def get_argument(self, command: str, index: int):
@@ -363,6 +369,33 @@ class CustomClient(discord.Client):
                                           f"again.")
 
         await message.channel.send(embed=embed)
+
+    async def edit_rekt(self, message):
+        rekt_keys = ["name", "on_message", "response"]
+
+        rekt_found = False
+        for rekt in DatabaseController.get_all_rekts(message.guild.name):
+            if rekt["name"] == self.get_argument(self.get_message_content(message), 0):
+                rekt_found = True
+
+        if not rekt_found:
+            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                  description=f"Woah! \"{self.get_argument(self.get_message_content(message), 0)}\" "
+                                              f"isn't registered in list of rekts, please check your spelling and try "
+                                              f"again.")
+
+            return await message.channel.send(embed=embed)
+
+        if self.get_argument(self.get_message_content(message), 1) not in rekt_keys:
+            embed = discord.Embed(title="Error occurred...", color=discord.Color.red(),
+                                  description=f"Woah! \"{self.get_argument(self.get_message_content(message), 1)}\" "
+                                              f"isn't a valid column, valid columns are: {', '.join(rekt_keys)}.")
+
+            return await message.channel.send(embed=embed)
+
+        DatabaseController.set_rekt_value(message.guild.name, self.get_argument(self.get_message_content(message), 0),
+                                          self.get_argument(self.get_message_content(message), 1),
+                                          self.get_argument(self.get_message_content(message), 2))
 
 
 def run():
