@@ -46,16 +46,20 @@ class CustomClient(discord.Client):
                     [Argument(0, "\"<variable>\"", "variable name", True, True)],
                     self.get_variable),
 
-            # TODO: add edit/get/remove rekt
-            Command("create-rekt", "Creates new rekt",
+            # TODO: add edit rekt
+            Command("add-rekt", "Creates new rekt",
                     [Argument(0, "\"<name>\"", "rekt name", True, True),
                      Argument(1, "\"<on_message>\"", "triggering message", True, True),
                      Argument(2, "\"<response>\"", "rekt response", True, True)],
-                    self.create_rekt),
+                    self.add_rekt),
 
             Command("get-rekt", "Gets all rekts",
                     [Argument(0, "\"<rekt_name>\"", "rekt name", True, False)],
                     self.get_rekt),
+
+            Command("remove-rekt", "Removes rekt",
+                    [Argument(0, "\"<rekt_name>\"", "rekt name", True, True)],
+                    self.remove_rekt),
         ]
 
     async def on_ready(self):
@@ -182,6 +186,10 @@ class CustomClient(discord.Client):
                     inline=False
                 )
 
+            prefix = DatabaseController.get_server_value(message.guild.name, "command_prefix")
+
+            embed.set_footer(text=f"You can get help about command by typing:\n{prefix}help \"command\"")
+
         else:
             command_to_get_help_with_name = self.get_argument(self.get_message_content(message)[1:], 0)
             embed = None
@@ -217,9 +225,11 @@ class CustomClient(discord.Client):
                                       description=f"Woah! \"{command_to_get_help_with_name}\" isn't registered in "
                                                   f"list of commands, please check your spelling and try again.")
 
-        await message.channel.send(embed=embed)
+        return await message.channel.send(embed=embed)
 
     async def clear_messages(self, message):
+        # TODO: fix performance
+
         count = self.get_message_content(message)[1:].replace("clear", "").replace(" ", "")
 
         if count == "":
@@ -292,7 +302,7 @@ class CustomClient(discord.Client):
 
         await message.channel.send(embed=embed)
 
-    async def create_rekt(self, message):
+    async def add_rekt(self, message):
         DatabaseController.create_rekt(message.guild.name, self.get_argument(self.get_message_content(message), 0),
                                        self.get_argument(self.get_message_content(message), 1),
                                        self.get_argument(self.get_message_content(message), 2))
@@ -336,6 +346,10 @@ class CustomClient(discord.Client):
                                                   f"list of rekts, please check your spelling and try again.")
 
         await message.channel.send(embed=embed)
+
+    async def remove_rekt(self, message):
+        # TODO: add check if rekt exists
+        DatabaseController.remove_rekt(message.guild.name, self.get_argument(message.content, 0))
 
 
 def run():

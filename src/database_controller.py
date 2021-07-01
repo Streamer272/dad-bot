@@ -31,7 +31,7 @@ class DatabaseController:
         db = Database("./db/database.sql")
 
         db.get_table("server").add_record(
-            f"'{server_name}', '{command_prefix}', '{dump_json(im_variations)}', '{dump_json(rekts)}', '{message}',{enabled}"
+            f"'{server_name}', '{command_prefix}', '{dump_json(im_variations)}', '{message}', {enabled}"
         )
 
         db.close()
@@ -84,7 +84,7 @@ class DatabaseController:
     @staticmethod
     def create_rekt(
             server_name,
-            name,
+            rekt_name,
             on_message,
             response
     ):
@@ -93,7 +93,19 @@ class DatabaseController:
         id = DatabaseController.get_server_id_by_server_name(server_name)
 
         db.get_table("rekt").add_record(
-            f"{id}, '{name}', '{on_message}', '{response}'"
+            f"{id}, '{rekt_name}', '{on_message}', '{response}'"
+        )
+
+        db.close()
+
+    @staticmethod
+    def remove_rekt(server_name, rekt_name):
+        db = Database("./db/database.sql")
+
+        id = DatabaseController.get_server_id_by_server_name(server_name)
+
+        db.get_table("rekt").delete_record(
+            f"server_id={id} AND name={rekt_name}"
         )
 
         db.close()
